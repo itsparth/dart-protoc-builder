@@ -24,7 +24,7 @@ class ProtocBuilder implements Builder {
   static const defaultGrpcEnabled = false;
   static const defaultUseInstalledProtoc = false;
   static const defaultPrecompileProtocPlugin = true;
-  static const defaultWellKnownTypesEnabled = false;
+  static const defaultExtraPaths = <String>[];
 
   ProtocBuilder(this.options)
       : protobufVersion = options.config['protobuf_version'] as String? ??
@@ -42,9 +42,11 @@ class ProtocBuilder implements Builder {
         outputDirectory = path.normalize(
             options.config['out_dir'] as String? ?? defaultOutputDirectory),
         grpcEnabled = options.config['grpc'] as bool? ?? defaultGrpcEnabled,
-        wellKnownTypesEnabled =
-            options.config['wellKnownTypesEnabled'] as bool? ??
-                defaultWellKnownTypesEnabled,
+        extraPaths = (options.config['extraPaths'] as YamlList?)
+                ?.nodes
+                .map((e) => e.value as String)
+                .toList() ??
+            defaultExtraPaths,
         useInstalledProtoc = options.config['use_installed_protoc'] as bool? ??
             defaultUseInstalledProtoc,
         precompileProtocPlugin =
@@ -61,7 +63,7 @@ class ProtocBuilder implements Builder {
   final bool grpcEnabled;
   final bool useInstalledProtoc;
   final bool precompileProtocPlugin;
-  final bool wellKnownTypesEnabled;
+  final List<String> extraPaths;
 
   @override
   Future<void> build(BuildStep buildStep) async {
@@ -83,9 +85,6 @@ class ProtocBuilder implements Builder {
     // Create the output directory (if necessary)
     await Directory(outputDirectory).create(recursive: true);
     // And run the "protoc" process
-    print(
-      collectProtocArguments(protocPlugin, pluginParameters, inputPath),
-    );
     await ProcessExtensions.runSafely(
       protoc.path,
       collectProtocArguments(protocPlugin, pluginParameters, inputPath),
@@ -121,8 +120,6 @@ class ProtocBuilder implements Builder {
     String pluginParameters,
     String inputPath,
   ) {
-    final wellKnownTypes =
-        wellKnownTypesEnabled ? 'google/protobuf/any.proto' : '';
     return <String>[
       if (protocPlugin.path.isNotEmpty)
         '--plugin=protoc-gen-dart=${protocPlugin.path}',
@@ -130,7 +127,7 @@ class ProtocBuilder implements Builder {
       ...protoPaths
           .map((protoPath) => '--proto_path=${path.join('.', protoPath)}'),
       path.join('.', inputPath),
-      wellKnownTypes,
+      ...extraPaths,
     ];
   }
 
