@@ -83,6 +83,9 @@ class ProtocBuilder implements Builder {
     // Create the output directory (if necessary)
     await Directory(outputDirectory).create(recursive: true);
     // And run the "protoc" process
+    print(
+      collectProtocArguments(protocPlugin, pluginParameters, inputPath),
+    );
     await ProcessExtensions.runSafely(
       protoc.path,
       collectProtocArguments(protocPlugin, pluginParameters, inputPath),
