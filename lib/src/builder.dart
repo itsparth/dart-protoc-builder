@@ -24,6 +24,7 @@ class ProtocBuilder implements Builder {
   static const defaultGrpcEnabled = false;
   static const defaultUseInstalledProtoc = false;
   static const defaultPrecompileProtocPlugin = true;
+  static const defaultWellKnownTypesEnabled = false;
 
   ProtocBuilder(this.options)
       : protobufVersion = options.config['protobuf_version'] as String? ??
@@ -41,6 +42,9 @@ class ProtocBuilder implements Builder {
         outputDirectory = path.normalize(
             options.config['out_dir'] as String? ?? defaultOutputDirectory),
         grpcEnabled = options.config['grpc'] as bool? ?? defaultGrpcEnabled,
+        wellKnownTypesEnabled =
+            options.config['wellKnownTypesEnabled'] as bool? ??
+                defaultWellKnownTypesEnabled,
         useInstalledProtoc = options.config['use_installed_protoc'] as bool? ??
             defaultUseInstalledProtoc,
         precompileProtocPlugin =
@@ -57,6 +61,7 @@ class ProtocBuilder implements Builder {
   final bool grpcEnabled;
   final bool useInstalledProtoc;
   final bool precompileProtocPlugin;
+  final bool wellKnownTypesEnabled;
 
   @override
   Future<void> build(BuildStep buildStep) async {
@@ -67,6 +72,9 @@ class ProtocBuilder implements Builder {
     final protocPlugin = useInstalledProtoc
         ? File('')
         : await fetchProtocPlugin(protocPluginVersion, precompileProtocPlugin);
+    final wellKnownTypes = wellKnownTypesEnabled
+        ? ' google/protobuf/any.proto google/protobuf/api.proto google/protobuf/descriptor.proto google/protobuf/duration.proto google/protobuf/empty.proto google/protobuf/field_mask.proto google/protobuf/source_context.proto google/protobuf/struct.proto google/protobuf/timestamp.proto google/protobuf/type.proto google/protobuf/wrappers.proto '
+        : '';
 
     final inputPath = path.normalize(buildStep.inputId.path);
 
@@ -80,7 +88,8 @@ class ProtocBuilder implements Builder {
     // And run the "protoc" process
     await ProcessExtensions.runSafely(
       protoc.path,
-      collectProtocArguments(protocPlugin, pluginParameters, inputPath),
+      collectProtocArguments(
+          protocPlugin, pluginParameters, inputPath, wellKnownTypes),
     );
 
     // Just as with the read, the build runner spies on what we write, so we
@@ -109,14 +118,19 @@ class ProtocBuilder implements Builder {
   /// This method has been explicitly extracted so it can be easily overridden
   /// in unit tests, where we may need to exert some extra control.
   List<String> collectProtocArguments(
-      File protocPlugin, String pluginParameters, String inputPath) {
+    File protocPlugin,
+    String pluginParameters,
+    String inputPath,
+    String wellKnownTypes,
+  ) {
     return <String>[
       if (protocPlugin.path.isNotEmpty)
         '--plugin=protoc-gen-dart=${protocPlugin.path}',
       '--dart_out=$pluginParameters${path.join('.', outputDirectory)}',
       ...protoPaths
-          .map((protoPath) => '--proto_path=${protoPath}'),
+          .map((protoPath) => '--proto_path=${path.join('.', protoPath)}'),
       path.join('.', inputPath),
+      wellKnownTypes,
     ];
   }
 
