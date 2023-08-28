@@ -115,7 +115,7 @@ class ProtocBuilder implements Builder {
         '--plugin=protoc-gen-dart=${protocPlugin.path}',
       '--dart_out=$pluginParameters${path.join('.', outputDirectory)}',
       ...protoPaths
-          .map((protoPath) => '--proto_path=${path.join('.', protoPath)}'),
+          .map((protoPath) => '--proto_path=${protoPath}'),
       path.join('.', inputPath),
     ];
   }
