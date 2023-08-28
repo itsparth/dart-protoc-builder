@@ -121,9 +121,8 @@ class ProtocBuilder implements Builder {
     String pluginParameters,
     String inputPath,
   ) {
-    final wellKnownTypes = wellKnownTypesEnabled
-        ? '-I google/protobuf/any.proto google/protobuf/api.proto google/protobuf/descriptor.proto google/protobuf/duration.proto google/protobuf/empty.proto google/protobuf/field_mask.proto google/protobuf/source_context.proto google/protobuf/struct.proto google/protobuf/timestamp.proto google/protobuf/type.proto google/protobuf/wrappers.proto '
-        : '';
+    final wellKnownTypes =
+        wellKnownTypesEnabled ? 'google/protobuf/any.proto' : '';
     return <String>[
       if (protocPlugin.path.isNotEmpty)
         '--plugin=protoc-gen-dart=${protocPlugin.path}',
