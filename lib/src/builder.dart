@@ -72,9 +72,6 @@ class ProtocBuilder implements Builder {
     final protocPlugin = useInstalledProtoc
         ? File('')
         : await fetchProtocPlugin(protocPluginVersion, precompileProtocPlugin);
-    final wellKnownTypes = wellKnownTypesEnabled
-        ? ' google/protobuf/any.proto google/protobuf/api.proto google/protobuf/descriptor.proto google/protobuf/duration.proto google/protobuf/empty.proto google/protobuf/field_mask.proto google/protobuf/source_context.proto google/protobuf/struct.proto google/protobuf/timestamp.proto google/protobuf/type.proto google/protobuf/wrappers.proto '
-        : '';
 
     final inputPath = path.normalize(buildStep.inputId.path);
 
@@ -88,8 +85,7 @@ class ProtocBuilder implements Builder {
     // And run the "protoc" process
     await ProcessExtensions.runSafely(
       protoc.path,
-      collectProtocArguments(
-          protocPlugin, pluginParameters, inputPath, wellKnownTypes),
+      collectProtocArguments(protocPlugin, pluginParameters, inputPath),
     );
 
     // Just as with the read, the build runner spies on what we write, so we
@@ -121,8 +117,10 @@ class ProtocBuilder implements Builder {
     File protocPlugin,
     String pluginParameters,
     String inputPath,
-    String wellKnownTypes,
   ) {
+    final wellKnownTypes = wellKnownTypesEnabled
+        ? '-I google/protobuf/any.proto google/protobuf/api.proto google/protobuf/descriptor.proto google/protobuf/duration.proto google/protobuf/empty.proto google/protobuf/field_mask.proto google/protobuf/source_context.proto google/protobuf/struct.proto google/protobuf/timestamp.proto google/protobuf/type.proto google/protobuf/wrappers.proto '
+        : '';
     return <String>[
       if (protocPlugin.path.isNotEmpty)
         '--plugin=protoc-gen-dart=${protocPlugin.path}',
