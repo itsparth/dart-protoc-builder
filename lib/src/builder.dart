@@ -127,7 +127,7 @@ class ProtocBuilder implements Builder {
       ...protoPaths
           .map((protoPath) => '--proto_path=${path.join('.', protoPath)}'),
       path.join('.', inputPath),
-      extraPaths.join(","),
+      ...extraPaths,
     ];
   }
 
